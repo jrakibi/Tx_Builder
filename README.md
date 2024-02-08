@@ -1,1 +1,1 @@
-# Transaction Builder (BTrust Builders program)
+# Transaction Builder (BTrust Builders program) [IN-PROGRESS]
