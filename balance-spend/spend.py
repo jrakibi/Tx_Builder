@@ -112,4 +112,82 @@ def calculate_txid(inputs: List[bytes], outputs: List[bytes]) -> str:
     txid = transaction_hash[::-1].hex()
     return txid
 
-# The rest of the code, including `spend_p2wpkh` and `spend_p2wsh` functions, should be updated accordingly to use these new method names.
+def execute_p2wpkh_transaction(state: object) -> str:
+    FEE = 1000  # Fee in satoshis
+    AMT = 1000000  # Amount to send in satoshis (0.01 BTC)
+
+    suitable_utxos = [(utxo_key, utxo) for utxo_key, utxo in state['utxo'].items() if utxo['value'] > AMT + FEE]
+    if not suitable_utxos:
+        raise ValueError("No suitable UTXO found")
+    utxo_key, utxo_to_spend = suitable_utxos[0]
+
+    txid_str, idx_str = utxo_key.split(':')
+    txid = bytes.fromhex(txid_str)
+    index = int(idx_str)
+    input_bytes = prepare_input_for_utxo(txid, index)
+
+    pubkeys = state['pubs'][:2]
+    multisig_script = generate_2of2_multisig_script(pubkeys)
+    p2wsh_program = calculate_p2wsh_program(multisig_script)
+    destination_output = create_output_for_script(p2wsh_program, AMT)
+
+    change_amt = int(utxo_to_spend['value']) - AMT - FEE
+    change_script = calculate_p2wpkh_program(state['pubs'][0])
+    change_output = create_output_for_script(change_script, change_amt)
+
+    script_code = derive_p2wpkh_script_code(utxo_to_spend)
+    outputs = [destination_output, change_output]
+    outpoint = txid[::-1] + index.to_bytes(4, byteorder="little")
+
+    msg = calculate_transaction_hash(outpoint, script_code, int(utxo_to_spend['value']), outputs)
+    key_index = get_key_index(utxo_to_spend, [program.hex() for program in state['programs']])
+    if key_index == -1:
+        raise ValueError("Matching private key not found")
+    priv_key = state['privs'][key_index]
+
+    witness = compile_p2wpkh_witness(priv_key, msg)
+    final_tx = build_transaction([input_bytes], [destination_output, change_output], [witness])
+
+    txid_final = calculate_txid([input_bytes], [destination_output, change_output])
+
+    return txid_final, final_tx
+
+def execute_p2wsh_transaction(state: object, txid_str: str) -> str:
+    COIN_VALUE = 1000000
+    FEE = 1000
+    AMT = 0
+
+    txid = bytes.fromhex(txid_str)
+    index = 0
+    input_bytes = prepare_input_for_utxo(txid, index)
+
+    message = "Jamal - The Times 06/Feb .."
+    message_bytes = message.encode('utf-8')
+    op_return_script = b'\x6a' + bytes([len(message_bytes)]) + message_bytes
+    destination_output = create_output_for_script(op_return_script, AMT)
+
+    change_amt = COIN_VALUE - FEE
+    change_script = calculate_p2wpkh_program(state['pubs'][0])
+    change_output = create_output_for_script(change_script, change_amt)
+
+    pubkeys = state['pubs'][:2]
+    multisig_script = generate_2of2_multisig_script(pubkeys)
+    script_code_length = len(multisig_script).to_bytes(1, 'little')
+    script_code = script_code_length + multisig_script
+
+    outputs = [destination_output, change_output]
+    outpoint = txid[::-1] + index.to_bytes(4, byteorder="little")
+    msg = calculate_transaction_hash(outpoint, script_code, COIN_VALUE, outputs)
+
+    privKeys = state['privs'][:2]
+    witness = construct_p2wsh_witness(privKeys, msg)
+    final_tx = build_transaction([input_bytes], [destination_output, change_output], [witness])
+
+    return final_tx
+
+if __name__ == "__main__":
+    state = synchronize_wallet_data(EXTENDED_PRIVATE_KEY)
+    txid1, tx1 = execute_p2wpkh_transaction(state)
+    print(f"Transaction 1: {tx1}")
+    tx2 = execute_p2wsh_transaction(state, txid1)
+    print(f"Transaction 2: {tx2}")
