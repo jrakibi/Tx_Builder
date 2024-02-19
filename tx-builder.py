@@ -114,4 +114,7 @@ if __name__ == "__main__":
     print(f"P2SH Address: {p2sh_address}")
 
     # Placeholder values for transaction creation
-    create_transaction_to_p2sh(p2sh_address, 100000, 'prev_txid', 0, 'priv_key')
+    prev_tx_id = ""
+    vout_index = 0
+    privKey = ""
+    create_transaction_to_p2sh(p2sh_address, 100000, prev_tx_id, vout_index, privKey)
