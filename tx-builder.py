@@ -5,6 +5,8 @@ import base58
 from ecdsa import SigningKey, SECP256k1, util
 from subprocess import CalledProcessError, run
 
+import ecdsa
+
 def generate_redeem_script(pre_image: str) -> str:
     """Generate the redeem script in hex format for a given pre-image."""
     pre_image_bytes = pre_image.encode()  # Convert string to byte representation
