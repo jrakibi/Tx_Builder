@@ -104,7 +104,7 @@ def bcli(cmd: str):
         raise Exception(res.stderr.strip())
 # Example usage
 if __name__ == "__main__":
-    pre_image = "Btrust Builders"
+    pre_image = "427472757374204275696c64657273"
     redeem_script = generate_redeem_script(pre_image)
     print(f"Redeem Script: {redeem_script}")
 
