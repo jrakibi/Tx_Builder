@@ -1,3 +1,4 @@
+from ast import List
 import binascii
 from hashlib import sha256, new
 import hashlib
@@ -6,6 +7,44 @@ from ecdsa import SigningKey, SECP256k1, util
 from subprocess import CalledProcessError, run
 
 import ecdsa
+
+
+def sign(priv: bytes, msg: bytes) -> bytes:
+    sk = SigningKey.from_string(priv, curve=SECP256k1)
+    while True:
+        signature_der = sk.sign_digest_deterministic(msg, hashfunc=hashlib.sha256, sigencode=util.sigencode_der)
+        r, s = util.sigdecode_der(signature_der, SECP256k1.order)
+        if s > SECP256k1.order // 2:
+            s = SECP256k1.order - s
+            signature_der = util.sigencode_der(r, s, SECP256k1.order)
+        signature_with_sighash = signature_der + b'\x01'
+        if s <= SECP256k1.order // 2:
+            break
+    return signature_with_sighash
+
+
+def varint(n):
+    if n < 0xfd:
+        return n.to_bytes(1, "little")
+    elif n <= 0xffff:
+        return b'\xfd' + n.to_bytes(2, "little")
+    elif n <= 0xffffffff:
+        return b'\xfe' + n.to_bytes(4, "little")
+    else:
+        return b'\xff' + n.to_bytes(8, "little")
+
+
+def get_txid(inputs: List[bytes], outputs: List[bytes]) -> str:
+    version = (2).to_bytes(4, "little")
+    locktime = bytes.fromhex("00000000")
+    input_count = len(inputs).to_bytes(1, "little")
+    output_count = len(outputs).to_bytes(1, "little")
+    serialized_inputs = b''.join(inputs)
+    serialized_outputs = b''.join(outputs)
+    transaction = (version + input_count + serialized_inputs + output_count + serialized_outputs + locktime)
+    hash = hashlib.sha256(hashlib.sha256(transaction).digest()).digest()
+    txid = hash[::-1].hex()
+    return txid
 
 def generate_redeem_script(pre_image: str) -> str:
     """Generate the redeem script in hex format for a given pre-image."""
