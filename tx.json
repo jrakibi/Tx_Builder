@@ -1,0 +1,32 @@
+{
+    "txid": "",
+    "version": 2,
+    "locktime": 0,
+    "vin": [
+        {
+            "txid": "49239eb7285257428a2864ae9775b74e1ee9c580d7a24e88bc5d6b760e14cc0c",
+            "vout": 0,
+            "scriptSig": {
+                "hex": ""
+            },
+            "sequence": 0,
+            "witness": [
+                "838a1f0f1ee607b54abf0a3f55792f6f8d09c3eb7a9fa46cd4976f2137ca2e3f4a901e314e1b827c3332d7e1865ffe1d7ff5f5d7576a9000f354487a09de44cd"
+            ]
+        }
+    ],
+    "vout": [
+        {
+            "value": 0.00407485,
+            "scriptPubKey": {
+                "hex": "5120245091249f4f29d30820e5f36e1e5d477dc3386144220bd6f35839e94de4b9ca"
+            }
+        },
+        {
+            "value": 0.000074,
+            "scriptPubKey": {
+                "hex": "001416d31d7632aa17b3b316b813c0a3177f5b615020"
+            }
+        }
+    ]
+}
