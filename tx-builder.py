@@ -49,14 +49,14 @@ def sign(priv_key: bytes, msg: bytes) -> bytes:
     return signature + b'\x01'
 
 def sign_transaction(priv_key: bytes, transaction: bytes, redeem_script: str) -> bytes:
-    """Sign the transaction specifically for a P2SH input."""
+    """Sign a P2SH transaction input."""
     sk = SigningKey.from_string(priv_key, curve=SECP256k1)
-    # Prepare the transaction for signing by including the redeem script and SIGHASH_ALL byte
+    # Simplified: Append redeem script and SIGHASH_ALL for demonstration purposes
     tx_to_sign = transaction + bytes.fromhex(redeem_script) + b'\x01'
     sighash = sha256(sha256(tx_to_sign).digest()).digest()
-    # Sign the transaction hash
+    # Sign the sighash
     signature = sk.sign_digest_deterministic(sighash, hashfunc=sha256, sigencode=util.sigencode_der)
-    return signature + b'\x01'  # Append SIGHASH_ALL
+    return signature + b'\x01'  # Signature with SIGHASH_ALL
 
 
 def create_transaction_to_p2sh(p2sh_address: str, amount: int, prev_txid: str, prev_vout: int, priv_key: str) -> str:
