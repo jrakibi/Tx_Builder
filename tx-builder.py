@@ -63,13 +63,15 @@ def create_transaction_to_p2sh(p2sh_address: str, amount: int, prev_txid: str, p
     Create a transaction that sends bitcoins to a P2SH address.
     This function constructs the transaction but does not broadcast it.
     """
-    # Decode the P2SH address to get the script hash
-    script_hash = base58.b58decode_check(p2sh_address)[1:]
-    # Construct the scriptPubKey for the transaction output
+    # Decode the P2SH address from Base58Check format to get the binary data This includes the version byte, script hash, and checksum
+    decoded_data = base58.b58decode_check(p2sh_address)
+
+    # Extract the script hash from the decoded data
+    # Skip the first byte (version byte) to get the script hash
+    script_hash = decoded_data[1:]
+    
     # The scriptPubKey for a P2SH output follows the pattern: OP_HASH160 <ScriptHash> OP_EQUAL
-    # OP_HASH160 is represented by the hexadecimal 0xa9
     # <ScriptHash> is the RIPEMD-160(SHA-256) hash of the redeem script, already encoded in the P2SH address
-    # OP_EQUAL is represented by the hexadecimal 0x87
     # The length of the ScriptHash is prefixed to indicate the number of bytes to push onto the stack
     scriptPubKey = b'\xa9' + bytes([len(script_hash)]) + script_hash + b'\x87'
 
